@@ -1,5 +1,20 @@
-var mqtt = require('mqtt')
-var client  = mqtt.connect('tcp://46.101.48.109:1883', {
+import mqtt from 'mqtt';
+import * as firebase from 'firebase';
+import moment from 'moment';
+
+const config = {
+  apiKey: "AIzaSyADlTbPd1MU5iGVful0yKHltq3v-Tm6EEQ",
+  authDomain: "example-158c1.firebaseapp.com",
+  databaseURL: "https://example-158c1.firebaseio.com",
+  projectId: "example-158c1",
+  storageBucket: "example-158c1.appspot.com",
+  messagingSenderId: "325793654113"
+};
+firebase.initializeApp(config);
+
+const database = firebase.database();
+
+const client  = mqtt.connect('tcp://46.101.48.109:1883', {
   clientId: 'empty'
 });
 
@@ -17,10 +32,24 @@ client.on('error', function (e) {
 client.on('message', function (topic, message) {
   // message is Buffer
   //console.log('Recieved: ' + message.toString());
-  let obj = JSON.parse(message);
+  const obj = JSON.parse(message);
   console.log(obj.hasOwnProperty('d'));
   if(obj.hasOwnProperty('d')) {
-    console.log(obj.d.myName);
+    const rootRef =  database.ref(`devices/${obj.d.myName}`);
+    const pushData = rootRef.push({
+      temperature: obj.d.temperature,
+      humidity: obj.d.humidity,
+      pressure: obj.d.pressure,
+      timestamp: moment().unix()
+    }, () => {
+      console.log("PUSH DATA COMPLETE.");
+    });
+    // console.log(obj.d.myName);
+    // console.log(obj.d.temperature);
+    // console.log(obj.d.humidity);
+    // console.log(obj.d.pressure);
+    // console.log(moment().unix());
+    // console.log(moment.unix(moment().unix()).format(`YYYY-MM-DD hh:mm:ss`));
   };
   // client.end()
 });
